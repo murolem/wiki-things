@@ -39,8 +39,9 @@ export default defineConfig({
                 const prepend = `\
 // Audio controller utility.
 // Provides audio preloading and simultaneous audio play. 
-// Supports limits for audios playing in total/per timeframe, in total or per single audio.
+// Supports limits for audios playing in total/per timeframe/burst, in total or per single audio source.
 // Author: aliser
+// Source code: https://github.com/murolem/wiki-things/blob/main/js/sandbox/src/lib/AudioController.ts
 // 
 // #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=
 // #=#=#=#=#=#=#=#=#=#=#=#=#=# [ Public interface ] #=#=#=#=#=#=#=#=#=#=#=#=#=#
