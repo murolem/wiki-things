@@ -1,0 +1,31 @@
+.mp-links > ul > li {
+    position: relative;
+}
+
+.mp-links > ul > li::after {
+    transition:
+        outline-color 0.1s ease-in,
+        0.2s ease-out;
+    opacity: 0;
+
+    content: "";
+    inset: 0px;
+    position: absolute;
+    border-image-slice: 3;
+    border-image-width: 6px;
+    border-image-outset: 1;
+    border-image-repeat: stretch stretch;
+    border-image-source: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAADdJREFUGJWFjkEOACAMwqj//zOeTHBO5UQCbEWSbFuNALiFS+NYAG0hg/TbheeLZEn/haQuKvQEnw8YDYaI+MoAAAAASUVORK5CYII=);
+    border-style: solid;
+    border-color: white;
+    pointer-events: none;
+}
+
+.mp-links > ul > li:hover {
+    outline-color: transparent;
+    scale: 1.03;
+}
+
+.mp-links > ul > li:hover::after {
+    opacity: 1;
+}

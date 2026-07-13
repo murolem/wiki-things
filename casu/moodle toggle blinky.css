@@ -1,0 +1,34 @@
+@keyframes blinky {
+  from { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+  to { box-shadow: 0 0 5px 5px hsl(3, 0%, 80%, .5); transform: translateY(-8px); }
+}
+
+.cu-moodle-anim-toggle {
+  animation: blinky 350ms ease-out infinite alternate;
+  animation-iteration-count: 8;
+}
+
+
+
+/* alternative with jumpy jump */
+@keyframes blinky {
+  0% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+  9.090909090909092% { box-shadow: 0 0 5px 5px hsl(3, 0%, 80%, .5); transform: translateY(-8px); }
+  18.181818181818183% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+    
+  27.27272727272727% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+  36.36363636363637% { box-shadow: 0 0 5px 5px hsl(3, 0%, 80%, .5); transform: translateY(-8px); }
+  45.45454545454545% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+    
+  54.54545454545454% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+  63.63636363636363% { box-shadow: 0 0 5px 5px hsl(3, 0%, 80%, .5); transform: translateY(-8px) rotate(360deg); }
+  72.72727272727273% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); transform:  rotate(360deg); }
+    
+  81.81818181818183% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+  90.9090909090909% { box-shadow: 0 0 5px 5px hsl(3, 0%, 80%, .5); transform: translateY(-8px); }
+  100% { box-shadow: 0 0 5px hsl(0, 0%, 100%, 0); }
+}
+
+.cu-moodle-anim-toggle {
+  animation: blinky calc(350ms * 6) ease-out infinite alternate;
+}

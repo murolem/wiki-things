@@ -1,0 +1,23 @@
+{
+  "name": "vite-project",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "build-lib": "vite build --config vite.lib.config.ts"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  },
+  "dependencies": {
+    "@aliser/vector2": "^2.0.0",
+    "emittery": "^2.0.0",
+    "replaceall": "^0.1.6",
+    "unplugin-dts": "^1.0.2",
+    "vite-plugin-css-injected-by-js": "^5.0.1"
+  }
+}

@@ -1,0 +1,29 @@
+CASU WIKI TODO
+
+support tags
+add notag= param to infobox
+fmt qualities in the liquid ifnobox
+improv sickness stat in liquid infobox desc: instant sickness is increase per mL of liquid injected
+
+# building infobox
+- do not show optional stuff 
+- sort loots
+- group loots
+- scale imges up, zoom but with a limit ?.
+
+# item infobox
+- add audios support
+
+# enemy infobox (salad specifically)
+make category item drops into a pie chart
+
+# other
+- color hide/expand toc label
+- for twig: expand/hide placement label todo see the log channel
+- add item/liquid/etc page stats how many pages are there vs in total. make cool progress bar.
+
+
+nocat support
+hide edit links on mobile
+do not apply min width for images without caption
+wiki: make images on game preset pages look good on mobile

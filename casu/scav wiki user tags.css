@@ -1,0 +1,11 @@
+
+.mw-userlink[title="User:FlitziX"]::after {
+  content: "TheCategoryMakerTM";
+  margin-left: .5ch;
+  font-size: .65em;
+  vertical-align: top;
+  border: 1px solid; 
+  color: var(--link);
+  opacity: .7;
+  padding: 0 .1em;
+}
