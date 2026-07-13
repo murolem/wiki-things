@@ -86,13 +86,8 @@ export class AudioController {
         this._totalSoundsLimiter = new SlidingTimeLimiter(1000, args.totalSoundsLimit, false);
         this._groupBurstSoundsLimit = args.groupBurstSoundsLimit;
 
-        const burstWindowUncapped = 1000 / args.totalSpsLimit;
-        // ensure min window so that we dont die on high sps
-        const burstWindowCapped = Math.max(5, burstWindowUncapped);
-        const burstWindowCountModifier = burstWindowCapped / burstWindowUncapped;
-        // if uncapped is below the cop, scale on the burst amount to compensate
-        const burstCount = args.totalBurstSoundsLimit * burstWindowCountModifier;
-        this._totalBurstSoundsLimiter = new SlidingTimeLimiter(burstWindowCapped, burstCount, false);
+        const burstParams = this._calculateBurstValues(args.totalSpsLimit, args.totalBurstSoundsLimit);
+        this._totalBurstSoundsLimiter = new SlidingTimeLimiter(burstParams.burstWindow, burstParams.adjustedBurstLimit, false);
     }
 
     /**
@@ -204,27 +199,22 @@ audios.lobotomy.play();
     }
 
     /**
- * Ensures (gets if exists, creates if doesn't) that a pool group with given url exists for the given pool and returns it.
- * @param pool 
- * @param url 
- */
+     * Ensures (gets if exists, creates if doesn't) that a pool group with given url exists for the given pool and returns it.
+     * @param pool 
+     * @param url 
+     */
     private _getPoolGroup(pool: WorkerPool, url: string): WorkerGroup {
         url = AudioController.sanitizeUrl(url);
 
         let group = pool.get(url);
         if (!group) {
-            const burstWindowUncapped = 1000 / this._groupSpsLimit;
-            // ensure min window so that we dont die on high sps
-            const burstWindowCapped = Math.max(5, burstWindowUncapped);
-            const burstWindowCountModifier = burstWindowCapped / burstWindowUncapped;
-            // if uncapped is below the cop, scale on the burst amount to compensate
-            const burstCount = this._groupBurstSoundsLimit * burstWindowCountModifier;
+            const burstParams = this._calculateBurstValues(this._groupSpsLimit, this._groupBurstSoundsLimit);
 
             group = {
                 workers: [],
                 totalSoundsLimiter: new SlidingTimeLimiter(1000, this._groupSoundsLimit, false),
                 spsLimiter: new SlidingTimeLimiter(1000, this._groupSpsLimit, false),
-                burstLimiter: new SlidingTimeLimiter(burstWindowCapped, burstCount, false)
+                burstLimiter: new SlidingTimeLimiter(burstParams.burstWindow, burstParams.adjustedBurstLimit, false)
             }
             pool.set(url, group);
         }
@@ -251,6 +241,26 @@ audios.lobotomy.play();
                 return true;
             })
             return worker;
+        }
+    }
+
+    /**
+     * Calculate burst related values.
+     * @param perSecondLimit Per second sound limit.
+     * @param burstLimit Burst limit.
+     * @returns Adjusted burst parameters.
+     */
+    private _calculateBurstValues(perSecondLimit: number, burstLimit: number) {
+        const burstWindowUncapped = 1000 / perSecondLimit;
+        // ensure min window so that we dont die on high sps
+        const burstWindowCapped = Math.max(5, burstWindowUncapped);
+        const burstWindowCountModifier = burstWindowCapped / burstWindowUncapped;
+        // if uncapped is below the cop, scale on the burst amount to compensate
+        const burstCount = burstLimit * burstWindowCountModifier;
+
+        return {
+            burstWindow: burstWindowCapped, 
+            adjustedBurstLimit: burstCount 
         }
     }
 }
