@@ -5,9 +5,9 @@ import { createElementFromHTML } from './utils';
 import { duneStareImg, rippleImg } from './vars';
 import type { DuneCfg } from '.';
 import { map } from '../utils/map';
+import { easeOutCubic } from './easing';
 
 export type DuneCtorArgs = {
-    dunnenlingsCunt: HTMLElement,
     initialPos: Vector2,
     targetPos: Vector2,
     initialVelocity: Vector2,
@@ -23,10 +23,11 @@ export class Dune {
     private dunnenlingsCunt: HTMLElement;
     private cfg: DuneCfg
     private t: number = 0;
-    el: HTMLElement;
-    rippleEl: HTMLElement;
+    // el: HTMLElement;
+    // rippleEl: HTMLElement;
 
-    private shrinkQueued: boolean = false;
+    private finishGrowAtMs: number;
+    private startShrinkAtMs: number;
 
     private sampleIdealPosition: (t: number) => Vector2;
 
@@ -39,8 +40,10 @@ export class Dune {
         this.targetPos = args.targetPos;
         this.initVelocity = args.initialVelocity;
         this.durationMs = args.durationMs;
-        this.dunnenlingsCunt = args.dunnenlingsCunt;
         this.cfg = args.staticCfg;
+
+        this.finishGrowAtMs = this.cfg.duneGrowDurationMs;
+        this.startShrinkAtMs = args.durationMs - this.cfg.duneShrinkDurationMs;
 
         // const endingYOffset = randomInRange(-30, 30);
         // this.targetPos.y += endingYOffset;
@@ -94,69 +97,120 @@ export class Dune {
             return bezier(this.t, initPos, c1, c2, endPos);
         };
 
-        if (!this.el) {
-            this.el = createElementFromHTML(duneStareImg);
-            this.el.classList.add("fl-dune");
-            this.el.style.setProperty("--duneShrinkDurationMs", this.cfg.duneShrinkDurationMs + "ms")
-            this.el.style.setProperty("--duneGrowDurationMs", this.cfg.duneGrowDurationMs + "ms")
-            setTimeout(() => this.el.classList.add("grow"), 1);
 
-            this.rippleEl = createElementFromHTML(rippleImg);
-            this.rippleEl.classList.add("fl-dune-ripple");
-            this.rippleEl.style.top = this.initialPos.y + "px";
-            this.rippleEl.style.left = this.initialPos.x + "px";
-            this.dunnenlingsCunt.append(this.rippleEl);
-            setTimeout(() => this.rippleEl.classList.add("grow"), 1);
-            setTimeout(() => this.rippleEl.remove(), 150);
-        } else {
-            // reset
-            this.el.classList.remove("grow");
-            setTimeout(() => this.el.classList.add("grow"), 1);
+        // this.shrinkQueued = false;
+        this.t = 0;
 
-            this.dunnenlingsCunt.append(this.rippleEl);
-            this.rippleEl.classList.remove("shrink");
-            this.rippleEl.style.top = this.initialPos.y + "px";
-            this.rippleEl.style.left = this.initialPos.x + "px";
-            setTimeout(() => this.rippleEl.classList.add("grow"), 1);
-            setTimeout(() => this.rippleEl.remove(), 150);
+        // if (!this.el) {
+        // this.el = createElementFromHTML(duneStareImg);
+        // this.el.classList.add("fl-dune");
+        // this.el.style.setProperty("--duneShrinkDurationMs", this.cfg.duneShrinkDurationMs + "ms")
+        // this.el.style.setProperty("--duneGrowDurationMs", this.cfg.duneGrowDurationMs + "ms")
+        // setTimeout(() => this.el.classList.add("grow"), 1);
 
-            this.shrinkQueued = false;
-            this.t = 0;
-        }
+        // this.rippleEl = createElementFromHTML(rippleImg);
+        // this.rippleEl.classList.add("fl-dune-ripple");
+        // this.rippleEl.style.top = this.initialPos.y + "px";
+        // this.rippleEl.style.left = this.initialPos.x + "px";
+        // this.dunnenlingsCunt.append(this.rippleEl);
+        // setTimeout(() => this.rippleEl.classList.add("grow"), 1);
+        // setTimeout(() => this.rippleEl.remove(), 150);
+        // } else {
+        // reset
+        // this.el.classList.remove("grow");
+        // setTimeout(() => this.el.classList.add("grow"), 1);
+
+        // this.dunnenlingsCunt.append(this.rippleEl);
+        // this.rippleEl.classList.remove("shrink");
+        // this.rippleEl.style.top = this.initialPos.y + "px";
+        // this.rippleEl.style.left = this.initialPos.x + "px";
+        // setTimeout(() => this.rippleEl.classList.add("grow"), 1);
+        // setTimeout(() => this.rippleEl.remove(), 150);
+
+        // this.shrinkQueued = false;
+        // this.t = 0;
+        // }
     }
 
     tickAndDraw(dt) {
+        const ctx = this.cfg.ctx;
+
         const tickTElapsed = dt * 1000 / this.durationMs;
         const msElapsedTotal = this.t * this.durationMs;
-        if (!this.shrinkQueued && msElapsedTotal >= this.durationMs - this.cfg.duneShrinkDurationMs) {
-            setTimeout(() => this.el.classList.remove("grow"), 1);
-
-            this.dunnenlingsCunt.append(this.rippleEl);
-            setTimeout(() => this.rippleEl.classList.add("grow"), 1);
-            setTimeout(() => this.rippleEl.classList.remove("grow"), 2);
-            setTimeout(() => this.rippleEl.remove(), 150);
-            // setTimeout(() => this.rippleEl.classList.add("shrink"), 2);
-            this.rippleEl.style.top = this.targetPos.y + "px";
-            this.rippleEl.style.left = this.targetPos.x + "px";
-
-
-            this.shrinkQueued = true;
-        }
 
         this.t += tickTElapsed;
-        this.t = clamp(this.t, 0, 1);
+        // this.t = clamp(this.t, 0, 1);
+
+        const rippleExpandDurationMs = 250;
+        const rippleShrinkDurationMs = 450;
+        const rippleExpand2DurationMs = 150;
+        const rippleShrink2DurationMs = 100;
+        const rippleGoneAfterMs = rippleExpandDurationMs + rippleShrinkDurationMs;
+        if (msElapsedTotal <= rippleGoneAfterMs) {
+            if (msElapsedTotal <= rippleExpandDurationMs) {
+                const rippleT = msElapsedTotal / rippleExpandDurationMs;
+                const size = 10 * easeOutCubic(rippleT);
+                ctx.drawImage(rippleImg, this.initialPos.x, this.initialPos.y, size, size);
+            } else {
+                const rippleT = (msElapsedTotal - rippleExpandDurationMs) / rippleShrinkDurationMs;
+                const size = 10 * easeOutCubic(1 - rippleT);
+                ctx.drawImage(rippleImg, this.initialPos.x, this.initialPos.y, size, size);
+            }
+        }
+
+        if(msElapsedTotal >= this.durationMs) {
+            const msElapsedTotalAdjusted = msElapsedTotal - this.durationMs;
+
+            if (msElapsedTotalAdjusted <= rippleExpand2DurationMs) {
+                const rippleT = msElapsedTotalAdjusted / rippleExpand2DurationMs;
+                const size = 5 * easeOutCubic(rippleT);
+                ctx.drawImage(rippleImg, this.targetPos.x, this.targetPos.y, size, size);
+            } else {
+                let rippleT = (msElapsedTotalAdjusted - rippleExpand2DurationMs) / rippleShrink2DurationMs;
+                rippleT = clamp(rippleT, 0, 1);
+                const size = 5 * easeOutCubic(1 - rippleT);
+                ctx.drawImage(rippleImg, this.targetPos.x, this.targetPos.y, size, size);
+            }
+        }
+
+        if(this.t >= 1) {
+            return msElapsedTotal > this.durationMs * 2;
+        }
+
+        // if (!this.shrinkQueued && msElapsedTotal >= this.durationMs - this.cfg.duneShrinkDurationMs) {
+        //     setTimeout(() => this.el.classList.remove("grow"), 1);
+
+        //     this.dunnenlingsCunt.append(this.rippleEl);
+        //     setTimeout(() => this.rippleEl.classList.add("grow"), 1);
+        //     setTimeout(() => this.rippleEl.classList.remove("grow"), 2);
+        //     setTimeout(() => this.rippleEl.remove(), 150);
+        //     // setTimeout(() => this.rippleEl.classList.add("shrink"), 2);
+        //     this.rippleEl.style.top = this.targetPos.y + "px";
+        //     this.rippleEl.style.left = this.targetPos.x + "px";
+
+
+        //     this.shrinkQueued = true;
+        // }
+
+
 
         const idealPosition = this.sampleIdealPosition(this.t);
         const yOffsetFromCenteral = Math.abs(this.initialPos.y - idealPosition.y);
 
-        let scaleMod = 1 - Math.pow(yOffsetFromCenteral / 100, 2) * 0.3;
-        scaleMod = clamp(scaleMod, 0.5, 10);
+        const growT = msElapsedTotal < this.finishGrowAtMs
+            ? msElapsedTotal / this.finishGrowAtMs
+            : 1;
+        const shrinkT = msElapsedTotal > this.startShrinkAtMs
+            ? (msElapsedTotal - this.startShrinkAtMs) / this.cfg.duneShrinkDurationMs
+            : 0;
 
-        this.el.style.setProperty("--scale-mod", scaleMod.toString());
-        // this.el.style.filter = `blur(${(yOffsetFromCenteral) / 30}px)`
+        const scaleMod2 = easeOutCubic(growT * (1 - shrinkT));
 
-        this.el.style.left = idealPosition.x + "px";
-        this.el.style.top = idealPosition.y + "px";
+        const scaleMod = clamp(1 - Math.pow(yOffsetFromCenteral / 100, 2) * 0.3, .5, 10)
+        const scale = scaleMod * scaleMod2;
+        const size = 40 * scale;
+
+        ctx.drawImage(duneStareImg, idealPosition.x, idealPosition.y, size, size);
 
         const done = this.t === 1;
         return done;

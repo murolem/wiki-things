@@ -11,16 +11,24 @@ import { Pool } from './Pool';
 import { replaceAll } from '../utils/replaceAll';
 import './styles.css';
 import { Dune, type DuneCtorArgs } from './Dune';
-import { duneStareImg } from './vars';
+import { duneStareImg, duneStareImgRawHtml } from './vars';
 import { jsonClone } from '../utils/jsonClone';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = 1 / RAD2DEG;
 
+let canvasCtx = null;
+
 export type DuneCfg = typeof duneCfg;
 const duneCfg = {
     mp: Vector2.zero(),
     mpAbs: Vector2.zero(),
+    canvas: document.createElement('canvas'),
+    get ctx(): CanvasRenderingContext2D {
+        if (!canvasCtx)
+            canvasCtx = duneCfg.canvas.getContext('2d');
+        return canvasCtx;
+    },
 
     dunesPerSec: {
         starting: 15,
@@ -28,7 +36,7 @@ const duneCfg = {
     },
 
     duneGrowDurationMs: 150,
-    duneShrinkDurationMs: 100,
+    duneShrinkDurationMs: 300,
 
     duneSpawnRippleDurationMs: 100,
 
@@ -55,8 +63,18 @@ const duneCfgInitial = jsonClone(duneCfg);
 let stateInit = false;
 let contentRoot: HTMLElement | null = null;
 
-let dunnenlingsCunt: HTMLElement | null = null;
-const dunnenlings: Dune[] = [];
+const canvas = duneCfg.canvas;
+canvas.classList.add("dunnelings-canvas")
+document.body.append(canvas);
+
+const resizeCanvas = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const ctx = duneCfg.ctx;
 
 let linkHoldersBoundCount = 0;
 
@@ -64,6 +82,8 @@ const sliderCunt: HTMLElement = document.createElement('div');
 sliderCunt.classList.add("dunnelings-slider-cunt");
 
 const sliderToStateMap = new Map<HTMLInputElement, { valueLabel: HTMLElement }>();
+
+const dunnelings: Dune[] = [];
 
 // ==============
 
@@ -83,10 +103,10 @@ function makeSlider(label, value, min, max, step?) {
 `);
     const slider = cunt.querySelector<HTMLInputElement>('input');
     sliderCunt.append(cunt);
-    
-    const valueLabel = cunt.querySelector('span.dunnelingls-slider-val-current');
+
+    const valueLabel = cunt.querySelector<HTMLElement>('span.dunnelingls-slider-val-current');
     slider.addEventListener('input', e => {
-        valueLabel.innerText = e.target.value;
+        valueLabel.innerText = slider.value;
     });
     sliderToStateMap.set(slider, { valueLabel })
 
@@ -95,7 +115,7 @@ function makeSlider(label, value, min, max, step?) {
 
 function dirtySlider(slider: HTMLInputElement) {
     const state = sliderToStateMap.get(slider);
-    if(!state)
+    if (!state)
         return;
 
     state.valueLabel.innerText = slider.value;
@@ -119,10 +139,6 @@ function main() {
             duneCfg.mpAbs.y = e.clientY - bodyRect.top;
         });
 
-        dunnenlingsCunt = document.createElement('div');
-        dunnenlingsCunt.classList.add("dunnenlings-cunt")
-        document.body.append(dunnenlingsCunt);
-
         const slidersCuntTarget = linkHolders[0];
         if (slidersCuntTarget) {
             slidersCuntTarget.before(sliderCunt);
@@ -136,7 +152,7 @@ function main() {
         }
         const ensureSliderValueEqualToOrAbove = (slider: HTMLInputElement, value: number) => {
             const sliderValue = getSliderValue(slider);
-            if(sliderValue < value) {
+            if (sliderValue < value) {
                 slider.value = value.toString();
                 dirtySlider(slider);
             }
@@ -144,7 +160,7 @@ function main() {
 
         const ensureSliderValueEqualToOrBelow = (slider: HTMLInputElement, value: number) => {
             const sliderValue = getSliderValue(slider);
-            if(sliderValue > value) {
+            if (sliderValue > value) {
                 slider.value = value.toString();
                 dirtySlider(slider);
             }
@@ -164,7 +180,7 @@ function main() {
 
         const duneMin = makeSlider("Dune-o-min", duneCfgInitial.dunesPerSec.starting, 1, 250, 1);
         duneMin.addEventListener('input', e => duneCfg.dunesPerSec.starting = getSliderValueFromArgs(e));
-        const duneMax = makeSlider("Dune-o-max", duneCfgInitial.dunesPerSec.ending, 1, 500, 1);
+        const duneMax = makeSlider("Dune-o-max", duneCfgInitial.dunesPerSec.ending, 1, 5000, 1);
         duneMax.addEventListener('input', e => duneCfg.dunesPerSec.ending = getSliderValueFromArgs(e));
         ensureRangedSlidersConstrained(duneMin, duneMax);
 
@@ -211,7 +227,7 @@ function bindLinkHolder(linkHolder: HTMLElement) {
         <div class="pbar-progress"><div class="pbar-progress-head"></div></div>
         <br>
         <div class="pbar-header">
-            ${duneStareImg}<span class="pbar-header-text">${title}</span>${duneStareImg}
+            ${duneStareImgRawHtml}<span class="pbar-header-text">${title}</span>${duneStareImgRawHtml}
             <br>
             <span class="pbar-header-progress-text">${progressPercentage}</span>
         </div>
@@ -243,7 +259,8 @@ function bindLinkHolder(linkHolder: HTMLElement) {
     const pbarExpandoContentEl = (() => {
         const ul = createElementFromHTML("<ul></ul>");
 
-        for (const link of [...newLinks]) {
+        for (let i = 0; i < newLinks.length; i++) {
+            const link = newLinks[i];
             const href = (link as HTMLLinkElement).href;
             let page = href.split("/wiki/")[1] ?? "";
             page = page.split("?")[0] ?? "";
@@ -289,7 +306,6 @@ function bindLinkHolder(linkHolder: HTMLElement) {
             targetPos,
             initialVelocity,
             durationMs,
-            dunnenlingsCunt,
             staticCfg: duneCfg
         }
     }
@@ -305,7 +321,11 @@ function bindLinkHolder(linkHolder: HTMLElement) {
     let toCreate = 0;
     const loop = (ts) => {
         const dt = (ts - tsPrevious) / 1000;
+        const bodyRect = document.body.getBoundingClientRect();
 
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(bodyRect.left, bodyRect.top);
         // =====
 
         pbarBgOffset.add(new Vector2(3, 1.5).mult(dt));
@@ -321,25 +341,23 @@ function bindLinkHolder(linkHolder: HTMLElement) {
         pbarAbsRect = getElementAbsPosition(pbarEl);
         for (let i = 1; i < toCreate; i++) {
             const dune = dunePool.take();
-            dunnenlings.push(dune);
-            dunnenlingsCunt.append(dune.el);
+            dunnelings.push(dune);
         }
         toCreate %= 1;
 
         // update & render
 
-        for (let i = dunnenlings.length - 1; i >= 0; i--) {
-            const dune = dunnenlings[i];
+        for (let i = dunnelings.length - 1; i >= 0; i--) {
+            const dune = dunnelings[i];
             const toRemove = dune.tickAndDraw(dt);
             if (toRemove) {
-                dunnenlings.splice(i, 1);
-                dune.el.remove();
+                dunnelings.splice(i, 1);
                 dunePool.free(dune);
             }
         }
 
         // =====
-
+        ctx.restore();
         requestAnimationFrame(loop);
         tsPrevious = ts;
     }

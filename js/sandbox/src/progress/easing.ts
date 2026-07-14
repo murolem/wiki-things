@@ -4,5 +4,9 @@ export function easeInExpo(t) {
 
 export function easeInSine(t) {
     return 1 - Math.cos((t * Math.PI) / 2);
+}
+
+export function easeOutCubic(x: number): number {
+    return 1 - Math.pow(1 - x, 3);
 
 }
