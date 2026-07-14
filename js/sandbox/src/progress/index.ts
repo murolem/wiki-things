@@ -87,7 +87,10 @@ function linkHolderBound() {
 }
 
 function bindLinkHolder(linkHolder: HTMLElement) {
-    linkHolderBound()
+    // prefire just because
+    linkHolderBound();
+
+    const title = linkHolder.dataset.title ?? "did you forget your title loser :voyager:"
 
     const linksTotal = linkHolder.children.length;
     const newLinks = linkHolder.querySelectorAll('a.new');
@@ -97,14 +100,14 @@ function bindLinkHolder(linkHolder: HTMLElement) {
     const progressPercentage = roundToDigit(progressT * 100, 2) + "%"
 
     const pbarWrapper = document.createElement("div");
-    contentRoot.append(pbarWrapper);
+    linkHolder.after(pbarWrapper);
 
     const pbarEl = createElementFromHTML<HTMLElement>(`\
     <div style="--progress: ${progressT};" class="pbar">
         <div class="pbar-progress"><div class="pbar-progress-head"></div></div>
         <br>
         <div class="pbar-header">
-            ${duneStareImg}<span class="pbar-header-text">Item Pages Creation Progress</span>${duneStareImg}
+            ${duneStareImg}<span class="pbar-header-text">${title}</span>${duneStareImg}
             <br>
             <span class="pbar-header-progress-text">${progressPercentage}</span>
         </div>
