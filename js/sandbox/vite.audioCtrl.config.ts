@@ -6,6 +6,11 @@ const outputFilename = "index.js";
 
 export default defineConfig({
     build: {
+        rolldownOptions: {
+            input: {
+                app: "./index.audioCtrl.html"
+            }
+        },
         target: 'es6',
         lib: {
             entry: "./src/lib/AudioController.ts",
