@@ -306,6 +306,7 @@ class AudioWorker extends Emittery<{
         url = AudioController.sanitizeUrl(url);
 
         this._audio = new Audio(url);
+        this._audio.load();
 
         if (AudioController.isLoaded(url)) {
             this._loaded = true;
