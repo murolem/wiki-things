@@ -169,3 +169,14 @@
         background-color: #ffff00;
     }
 }
+
+.dunnelings-slider-cunt {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin: 1rem 0;
+    border: 2px solid white;
+    width: fit-content;
+    padding: .25rem;
+    background-color: black;
+}

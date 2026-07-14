@@ -4,6 +4,7 @@ import { clamp } from '../utils/clamp';
 import { createElementFromHTML } from './utils';
 import { duneStareImg, rippleImg } from './vars';
 import type { DuneCfg } from '.';
+import { map } from '../utils/map';
 
 export type DuneCtorArgs = {
     dunnenlingsCunt: HTMLElement,
@@ -20,7 +21,7 @@ export class Dune {
     private initVelocity: Vector2;
     private durationMs: number;
     private dunnenlingsCunt: HTMLElement;
-    private staticCfg: DuneCfg
+    private cfg: DuneCfg
     private t: number = 0;
     el: HTMLElement;
     rippleEl: HTMLElement;
@@ -39,7 +40,7 @@ export class Dune {
         this.initVelocity = args.initialVelocity;
         this.durationMs = args.durationMs;
         this.dunnenlingsCunt = args.dunnenlingsCunt;
-        this.staticCfg = args.staticCfg;
+        this.cfg = args.staticCfg;
 
         // const endingYOffset = randomInRange(-30, 30);
         // this.targetPos.y += endingYOffset;
@@ -53,7 +54,7 @@ export class Dune {
         // CW = 1, CCW = -1
         // const preferdBendDirection = Math.sign(c1Delta.angle);
 
-        // const intensityBound = 0.8;
+        const intensityBound = 0.8;
 
         this.sampleIdealPosition = () => {
             // move control point in a way so that the resulting bezier trajectory bends around mouse cursor.
@@ -63,22 +64,22 @@ export class Dune {
             // returns a new position of p2.
             // const applyBend = (p1: Vector2, p2: Vector2): Vector2 => {
             //     const p2Delta = Vector2.sub(p2, p1);
-            //     const mouseDelta = Vector2.sub(mpAbs, p1);
+            //     const mouseDelta = Vector2.sub(this.cfg.mpAbs, p1);
             //     const angleDelta = Vector2.angleBetweenSigned(p2Delta, mouseDelta);
             //     const angleDeltaAbs = Math.abs(angleDelta);
 
-            //     if (angleDeltaAbs > trajectoryBend.startRadians) {
+            //     if (angleDeltaAbs > this.cfg.trajectoryBend.startRadians) {
             //         return p2.copy();
             //     }
 
-            //     let intensityT = (angleDeltaAbs / trajectoryBend.startRadians);
+            //     let intensityT = (angleDeltaAbs / this.cfg.trajectoryBend.startRadians);
             //     if(intensityT > intensityBound) {
             //         intensityT = map(intensityT, intensityBound, 1, intensityBound, 0)
             //     } else if (intensityT < intensityBound) {
             //         intensityT = map(intensityT, 0, intensityBound, 0, intensityBound)
             //     }
 
-            //     intensityT = 1 - trajectoryBend.intensityCurve(1 - intensityT);
+            //     intensityT = 1 - this.cfg.trajectoryBend.intensityCurve(1 - intensityT);
 
             //     let bendRads = intensityT * Math.sign(angleDelta) * Math.PI / 7;
 
@@ -86,8 +87,7 @@ export class Dune {
             // }
 
             // const c1Res = applyBend(initPos, c1);
-            // // const c2Res = applyBend(endPos, c2);
-            // const c2Res = c2;
+            // const c2Res = applyBend(endPos, c2);
 
             // return bezier(this.t, initPos, c1Res, c2Res, endPos);
 
@@ -97,8 +97,8 @@ export class Dune {
         if (!this.el) {
             this.el = createElementFromHTML(duneStareImg);
             this.el.classList.add("fl-dune");
-            this.el.style.setProperty("--duneShrinkDurationMs", this.staticCfg.duneShrinkDurationMs + "ms")
-            this.el.style.setProperty("--duneGrowDurationMs", this.staticCfg.duneGrowDurationMs + "ms")
+            this.el.style.setProperty("--duneShrinkDurationMs", this.cfg.duneShrinkDurationMs + "ms")
+            this.el.style.setProperty("--duneGrowDurationMs", this.cfg.duneGrowDurationMs + "ms")
             setTimeout(() => this.el.classList.add("grow"), 1);
 
             this.rippleEl = createElementFromHTML(rippleImg);
@@ -128,7 +128,7 @@ export class Dune {
     tickAndDraw(dt) {
         const tickTElapsed = dt * 1000 / this.durationMs;
         const msElapsedTotal = this.t * this.durationMs;
-        if (!this.shrinkQueued && msElapsedTotal >= this.durationMs - this.staticCfg.duneShrinkDurationMs) {
+        if (!this.shrinkQueued && msElapsedTotal >= this.durationMs - this.cfg.duneShrinkDurationMs) {
             setTimeout(() => this.el.classList.remove("grow"), 1);
 
             this.dunnenlingsCunt.append(this.rippleEl);

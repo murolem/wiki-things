@@ -19,15 +19,28 @@ const DEG2RAD = 1 / RAD2DEG;
 
 export type DuneCfg = typeof duneCfg;
 const duneCfg = {
+    mp: Vector2.zero(),
+    mpAbs: Vector2.zero(),
+
     dunesPerSec: {
         starting: 15,
-        ending: 50
+        ending: 30
     },
 
     duneGrowDurationMs: 150,
     duneShrinkDurationMs: 100,
 
     duneSpawnRippleDurationMs: 100,
+
+    speed: {
+        min: 200,
+        max: 500
+    },
+
+    lifetimeMs: {
+        min: 800,
+        max: 3000
+    },
 
     trajectoryBend: {
         startRadians: 25 * DEG2RAD,
@@ -36,17 +49,21 @@ const duneCfg = {
     }
 }
 const duneCfgInitial = jsonClone(duneCfg);
+
 // ==============
 
 let stateInit = false;
 let contentRoot: HTMLElement | null = null;
 
-let mp = Vector2.zero();
-let mpAbs = Vector2.zero();
 let dunnenlingsCunt: HTMLElement | null = null;
 const dunnenlings: Dune[] = [];
 
 let linkHoldersBoundCount = 0;
+
+const sliderCunt: HTMLElement = document.createElement('div');
+sliderCunt.classList.add("dunnelings-slider-cunt");
+
+const sliderToStateMap = new Map<HTMLInputElement, { valueLabel: HTMLElement }>();
 
 // ==============
 
@@ -54,30 +71,117 @@ main();
 
 // ==============
 
+function makeSlider(label, value, min, max, step?) {
+    const id = Math.random().toString();
+
+    const cunt = createElementFromHTML(`\
+<div>
+    <label for="${id}">${label}</label><br>
+    <input type="range" name="${id}" min="${min}" max="${max}" step="${step}" value=${value} />
+    <span>${min}-${max}</span> • <span class="dunnelingls-slider-val-current">${value}</span>
+</div>
+`);
+    const slider = cunt.querySelector<HTMLInputElement>('input');
+    sliderCunt.append(cunt);
+    
+    const valueLabel = cunt.querySelector('span.dunnelingls-slider-val-current');
+    slider.addEventListener('input', e => {
+        valueLabel.innerText = e.target.value;
+    });
+    sliderToStateMap.set(slider, { valueLabel })
+
+    return slider
+}
+
+function dirtySlider(slider: HTMLInputElement) {
+    const state = sliderToStateMap.get(slider);
+    if(!state)
+        return;
+
+    state.valueLabel.innerText = slider.value;
+}
+
 function main() {
+    contentRoot = document.querySelector('.mw-parser-output');
+    if (!contentRoot) return;
+
+    const linkHolders = contentRoot.querySelectorAll('.pbox-link-holder');
+    linkHolders.forEach(bindLinkHolder);
+
     if (!stateInit) {
         document.addEventListener('mousemove', e => {
-            mp.x = e.clientX;
-            mp.y = e.clientY;
+            duneCfg.mp.x = e.clientX;
+            duneCfg.mp.y = e.clientY;
 
             const bodyRect = document.body.getBoundingClientRect();
 
-            mpAbs.x = e.clientX - bodyRect.left;
-            mpAbs.y = e.clientY - bodyRect.top;
+            duneCfg.mpAbs.x = e.clientX - bodyRect.left;
+            duneCfg.mpAbs.y = e.clientY - bodyRect.top;
         });
 
         dunnenlingsCunt = document.createElement('div');
         dunnenlingsCunt.classList.add("dunnenlings-cunt")
         document.body.append(dunnenlingsCunt);
 
+        const slidersCuntTarget = linkHolders[0];
+        if (slidersCuntTarget) {
+            slidersCuntTarget.before(sliderCunt);
+        }
+
+        const getSliderValue = (e: HTMLInputElement) => {
+            return parseInt(e.value);
+        }
+        const getSliderValueFromArgs = (e: Event) => {
+            return getSliderValue(e.target as HTMLInputElement);
+        }
+        const ensureSliderValueEqualToOrAbove = (slider: HTMLInputElement, value: number) => {
+            const sliderValue = getSliderValue(slider);
+            if(sliderValue < value) {
+                slider.value = value.toString();
+                dirtySlider(slider);
+            }
+        }
+
+        const ensureSliderValueEqualToOrBelow = (slider: HTMLInputElement, value: number) => {
+            const sliderValue = getSliderValue(slider);
+            if(sliderValue > value) {
+                slider.value = value.toString();
+                dirtySlider(slider);
+            }
+        }
+
+        const ensureRangedSlidersConstrained = (sliderMin: HTMLInputElement, sliderMax: HTMLInputElement) => {
+            sliderMin.addEventListener('input', e => {
+                const valueMin = getSliderValueFromArgs(e);
+                ensureSliderValueEqualToOrAbove(sliderMax, valueMin);
+            });
+
+            sliderMax.addEventListener('input', e => {
+                const valueMax = getSliderValueFromArgs(e);
+                ensureSliderValueEqualToOrBelow(sliderMin, valueMax);
+            });
+        }
+
+        const duneMin = makeSlider("Dune-o-min", duneCfgInitial.dunesPerSec.starting, 1, 250, 1);
+        duneMin.addEventListener('input', e => duneCfg.dunesPerSec.starting = getSliderValueFromArgs(e));
+        const duneMax = makeSlider("Dune-o-max", duneCfgInitial.dunesPerSec.ending, 1, 500, 1);
+        duneMax.addEventListener('input', e => duneCfg.dunesPerSec.ending = getSliderValueFromArgs(e));
+        ensureRangedSlidersConstrained(duneMin, duneMax);
+
+        const duneSpeedMin = makeSlider("Dune init speed min", duneCfgInitial.speed.min, 0, 3000, 1);
+        duneSpeedMin.addEventListener('input', e => duneCfg.speed.min = getSliderValueFromArgs(e));
+        const duneSpeedMax = makeSlider("Dune init speed max", duneCfgInitial.speed.max, 0, 6000, 1);
+        duneSpeedMax.addEventListener('input', e => duneCfg.speed.max = getSliderValueFromArgs(e));
+        ensureRangedSlidersConstrained(duneSpeedMin, duneSpeedMax);
+
+        const duneLifetimeMsMin = makeSlider("Dune lifetime ms min", duneCfgInitial.lifetimeMs.min, 1, 5000, 1);
+        duneLifetimeMsMin.addEventListener('input', e => duneCfg.lifetimeMs.min = getSliderValueFromArgs(e));
+        const duneLifetimeMsMax = makeSlider("Dune lifetime ms max", duneCfgInitial.lifetimeMs.max, 1, 10000, 1);
+        duneLifetimeMsMax.addEventListener('input', e => duneCfg.lifetimeMs.max = getSliderValueFromArgs(e));
+        ensureRangedSlidersConstrained(duneLifetimeMsMin, duneLifetimeMsMax);
+
         stateInit = true;
     }
-
-    contentRoot = document.querySelector('.mw-parser-output');
-    if (!contentRoot) return;
-
-    const linkHolders = contentRoot.querySelectorAll('.pbox-link-holder');
-    linkHolders.forEach(bindLinkHolder);
 }
 
 function linkHolderBound() {
@@ -88,7 +192,7 @@ function linkHolderBound() {
 
 function bindLinkHolder(linkHolder: HTMLElement) {
     // prefire just because
-    linkHolderBound();
+    // linkHolderBound();
 
     const title = linkHolder.dataset.title ?? "did you forget your title loser :voyager:"
 
@@ -176,14 +280,14 @@ function bindLinkHolder(linkHolder: HTMLElement) {
             velSign = -1;
         }
 
-        const initialVelocity = Vector2.fromAngle(velSign * randomInRange(95 * DEG2RAD), randomInRange(300, 500));
+        const initialVelocity = Vector2.fromAngle(velSign * randomInRange(95 * DEG2RAD), randomInRange(duneCfg.speed.min, duneCfg.speed.max));
         // const initialVelocity = Vector2.fromAngle(Math.PI / 10, 500);
-        const durationMs = randomInRange(500, 2000);
+        const durationMs = randomInRange(duneCfg.lifetimeMs.min, duneCfg.lifetimeMs.max);
 
         return {
-            initialPos, 
-            targetPos, 
-            initialVelocity, 
+            initialPos,
+            targetPos,
+            initialVelocity,
             durationMs,
             dunnenlingsCunt,
             staticCfg: duneCfg
