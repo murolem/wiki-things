@@ -9,8 +9,8 @@ import './styles.css';
 
 // ===============
 
-const CAPTURE = false;
-const CAPTURE_N_FRAMES = 30 * 5;
+const CAPTURE = true;
+const CAPTURE_N_FRAMES = 30 * 8;
 const bigPixelSize = 4;
 
 const {
@@ -207,12 +207,14 @@ new p5Class(async (p5Untyped) => {
 
         // ==========
         const mouse = getMouse();
+        const cpSmallPixel = new Vector2(width / 2, height / 2);
+        const cp = cpSmallPixel.div(bigPixelSize).floor();
         // mouse[0] = bigPixelsPerSide / 2;
         // mouse[1] = bigPixelsPerSide / 2;
 
         // gen
-        let pixelsToChopOffCount = clamp(bigPixelSize * 100000 * dt, 1, Infinity)
-        const pixelsToChopOff = nonrndPixelIndices.splice(0, pixelsToChopOffCount);
+        let pixelsToChopOffCount = clamp(bigPixelSize * 100000000 * dt, 1, Infinity)
+        const pixelsToChopOff = rndPixelIndices.splice(0, pixelsToChopOffCount);
         buffer.loadPixels()
         const durationMax = CAPTURE ? Vars.fps * 3 : Vars.fps * 1.5;
 
@@ -252,7 +254,11 @@ new p5Class(async (p5Untyped) => {
         }
 
         for (const obj of flyingPixels) {
-            obj.posTo.set(mouse)
+            // const cpDelta = cp.copy().sub(obj.posFrom);
+            // away
+            // const targetPos = cp.copy().add(m);
+            // obj.posTo.set(targetPos)
+            obj.posTo.set(cp.copy().add(obj.posTo.x % Math.round((obj.pos.mag + (Math.cos(frames / 10)) * 100) / 10)))
         }
 
         buffer.updatePixels();
@@ -264,37 +270,41 @@ new p5Class(async (p5Untyped) => {
         const toDelete = new Set<FlyingPixel>();
         // const bigPixelSize = 8;
 
-        const speed = 2000;
+        const speed = 200000;
         for (const obj of flyingPixels) {
             // draw new pixel
             // obj.t = 0.5;
 
-            // const dv = new Vector2(obj.pos.xTo - obj.pos.x, obj.pos.yTo - obj.pos.y);
-            // let delta = dv.copy().setMag(Math.min(speed, dv.mag));
-            // delta.mag = frames / Math.pow(delta.mag, 2);
+            const delta = obj.posTo.copy().sub(obj.pos);
+            let accelDetla = delta.copy().setMag(Math.min(delta.mag, speed));
+            accelDetla.mag = frames / Math.pow(accelDetla.mag, 2);
 
-            // obj.accel.mult(.99);
-            // obj.accel.add(delta)
+            obj.accel.mult(1.1);
+            obj.accel.add(delta)
 
-            obj.accel.add(0, (10 + height - obj.pos.x) * dt * 100);
+            // obj.accel.add(0, (10 + height - obj.pos.x) * dt * 100);
 
-            // if(obj.accel.mag > 500)
-                // obj.accel.mag -= 100;
+            if(obj.accel.mag > 500)
+                obj.accel.mag -= 100;
 
             // if(obj.accel.mag > 100)
                 // obj.accel.setMag(obj.accel.mag - 2000);
 
+            obj.vel.mult(.99)
             obj.vel.x += obj.accel.x  * dt;
             obj.vel.y += obj.accel.y  * dt;
-            obj.vel.mult(.99)
-
+            
             obj.pos.x += obj.vel.x * dt;
             obj.pos.y += obj.vel.y * dt;
+            
 
-            if(obj.pos.x < 0) { obj.pos.x = bigPixelsPerSide - 1 - obj.pos.x; }
-            else if(obj.pos.x > bigPixelsPerSide - 1) { obj.pos.x -= (bigPixelsPerSide - 1); }
-            if(obj.pos.y < 0) { obj.pos.y = bigPixelsPerSide - 1 - obj.pos.y; }
-            else if(obj.pos.y > bigPixelsPerSide - 1) { obj.pos.y -= (bigPixelsPerSide - 1); }
+            // bound wrapping
+            if(false) {
+                if(obj.pos.x < 0) { obj.pos.x = bigPixelsPerSide - 1 - obj.pos.x; }
+                else if(obj.pos.x > bigPixelsPerSide - 1) { obj.pos.x -= (bigPixelsPerSide - 1); }
+                if(obj.pos.y < 0) { obj.pos.y = bigPixelsPerSide - 1 - obj.pos.y; }
+                else if(obj.pos.y > bigPixelsPerSide - 1) { obj.pos.y -= (bigPixelsPerSide - 1); }
+            }
 
             // obj.t = easeCubicOut(obj.t);
             // obj.pos.x = Math.round(obj.pos.xFrom + (obj.pos.xTo - obj.pos.xFrom) * obj.t);
