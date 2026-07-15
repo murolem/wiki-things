@@ -46,8 +46,8 @@ const duneCfg = {
     },
 
     lifetimeMs: {
-        min: 800,
-        max: 3000
+        min: 2500,
+        max: 5000
     },
 
     trajectoryBend: {
@@ -81,8 +81,6 @@ let linkHoldersBoundCount = 0;
 const sliderCunt: HTMLElement = document.createElement('div');
 sliderCunt.classList.add("dunnelings-slider-cunt");
 
-const sliderToStateMap = new Map<HTMLInputElement, { valueLabel: HTMLElement }>();
-
 const dunnelings: Dune[] = [];
 
 // ==============
@@ -108,17 +106,12 @@ function makeSlider(label, value, min, max, step?) {
     slider.addEventListener('input', e => {
         valueLabel.innerText = slider.value;
     });
-    sliderToStateMap.set(slider, { valueLabel })
 
     return slider
 }
 
 function dirtySlider(slider: HTMLInputElement) {
-    const state = sliderToStateMap.get(slider);
-    if (!state)
-        return;
-
-    state.valueLabel.innerText = slider.value;
+    slider.dispatchEvent(new Event('input'));
 }
 
 function main() {
@@ -178,19 +171,19 @@ function main() {
             });
         }
 
-        const duneMin = makeSlider("Dune-o-min", duneCfgInitial.dunesPerSec.starting, 1, 250, 1);
+        const duneMin = makeSlider("Dune-o-min", duneCfgInitial.dunesPerSec.starting, 1, 5000, 1);
         duneMin.addEventListener('input', e => duneCfg.dunesPerSec.starting = getSliderValueFromArgs(e));
         const duneMax = makeSlider("Dune-o-max", duneCfgInitial.dunesPerSec.ending, 1, 5000, 1);
         duneMax.addEventListener('input', e => duneCfg.dunesPerSec.ending = getSliderValueFromArgs(e));
         ensureRangedSlidersConstrained(duneMin, duneMax);
 
-        const duneSpeedMin = makeSlider("Dune init speed min", duneCfgInitial.speed.min, 0, 3000, 1);
+        const duneSpeedMin = makeSlider("Dune init speed min", duneCfgInitial.speed.min, 0, 6000, 1);
         duneSpeedMin.addEventListener('input', e => duneCfg.speed.min = getSliderValueFromArgs(e));
         const duneSpeedMax = makeSlider("Dune init speed max", duneCfgInitial.speed.max, 0, 6000, 1);
         duneSpeedMax.addEventListener('input', e => duneCfg.speed.max = getSliderValueFromArgs(e));
         ensureRangedSlidersConstrained(duneSpeedMin, duneSpeedMax);
 
-        const duneLifetimeMsMin = makeSlider("Dune lifetime ms min", duneCfgInitial.lifetimeMs.min, 1, 5000, 1);
+        const duneLifetimeMsMin = makeSlider("Dune lifetime ms min", duneCfgInitial.lifetimeMs.min, 1, 10000, 1);
         duneLifetimeMsMin.addEventListener('input', e => duneCfg.lifetimeMs.min = getSliderValueFromArgs(e));
         const duneLifetimeMsMax = makeSlider("Dune lifetime ms max", duneCfgInitial.lifetimeMs.max, 1, 10000, 1);
         duneLifetimeMsMax.addEventListener('input', e => duneCfg.lifetimeMs.max = getSliderValueFromArgs(e));
@@ -215,7 +208,10 @@ function bindLinkHolder(linkHolder: HTMLElement) {
     const linksTotal = linkHolder.children.length;
     const newLinks = linkHolder.querySelectorAll('a.new');
     const linksNewCount = newLinks.length;
-    const progressT = 1 - (linksNewCount / linksTotal);
+    let progressT = 1 - (linksNewCount / linksTotal);
+    // muhehe sorry I havent added a win condition yet
+    if(progressT === 1)
+        progressT = 0.9999;
     // const progressT = 1;
     const progressPercentage = roundToDigit(progressT * 100, 2) + "%"
 
@@ -290,6 +286,7 @@ function bindLinkHolder(linkHolder: HTMLElement) {
         const initialYOffset = randomInRange(pbarAbsRect.h);
         const initialPos = new Vector2(pbarAbsRect.x - 20 + randomInRange(pborProgressedWidth), pbarAbsRect.y + initialYOffset);
         const targetPos = new Vector2(pbarAbsRect.x + pbarAbsRect.w - 20 - randomInRange(pborPendingWidth), pbarAbsRect.y + randomInRange(pbarAbsRect.h));
+        // const targetPos = duneCfg.mpAbs.copy();
         let velSign = initialYOffset < pbarAbsRect.h / 2
             ? -1
             : 1;

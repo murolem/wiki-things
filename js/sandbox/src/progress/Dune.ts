@@ -51,7 +51,8 @@ export class Dune {
         const initPos = this.initialPos;
         const c1 = initPos.copy().add(this.initVelocity);
         const endPos = this.targetPos;
-        const c2 = bezier(.3, initPos, c1, endPos, endPos);
+        const c2 = bezier(.6, initPos, c1, endPos, endPos);
+        c2.x = endPos.x;
 
         // const c1Delta = Vector2.sub(c1, initPos);
         // CW = 1, CCW = -1
