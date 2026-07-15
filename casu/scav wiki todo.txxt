@@ -27,3 +27,8 @@ nocat support
 hide edit links on mobile
 do not apply min width for images without caption
 wiki: make images on game preset pages look good on mobile
+
+funsies:
+- add pointy pic pointing to guidelines pointy. animate arrows. add siren sound.
+- landmine on the landmine page. break page into pieces. triangulate at random, convert each piece to img (?) or canvas, add physics.
+- add item pages progress screen condition

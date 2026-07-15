@@ -8,7 +8,8 @@
     "audioCtrl:dev": "vite --config vite.audioCtrl.config.ts",
     "audioCtrl:build": "vite build --config vite.audioCtrl.config.ts",
     "progress:dev": "vite --config vite.progress.config.ts",
-    "progress:build": "vite build --config vite.progress.config.ts"
+    "progress:build": "vite build --config vite.progress.config.ts",
+    "dunevas:dev": "vite --config vite.dunevas.config.ts"
   },
   "devDependencies": {
     "typescript": "~6.0.2",
@@ -16,7 +17,11 @@
   },
   "dependencies": {
     "@aliser/vector2": "^2.0.0",
+    "@types/d3-ease": "^3.0.2",
+    "@types/p5": "^1.7.7",
+    "d3-ease": "^3.0.1",
     "emittery": "^2.0.0",
+    "p5": "^2.3.0",
     "replaceall": "^0.1.6",
     "unplugin-dts": "^1.0.2",
     "vite-plugin-css-injected-by-js": "^5.0.1"
