@@ -43,11 +43,13 @@ main {
 .btn3 { --n: 3 }
 .btn4 { --n: 4 }
 
-.start-button {
+.save-btn,
+.capture-btn {
     position: absolute;
     top: 0;
-    right: 0;
-    margin: 1rem;
-    font-size: large;
-    font-weight: bold;
+    left: 0;
+
+    &.capture-btn {
+        top: 2.5rem;
+    }
 }
